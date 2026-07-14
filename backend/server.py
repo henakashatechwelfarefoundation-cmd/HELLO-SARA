@@ -1,58 +1,39 @@
-from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
-from starlette.middleware.cors import CORSMiddleware
-from motor.motor_asyncio import AsyncIOMotorClient
-import os
+"""Hello Sara — FastAPI backend entry point.
+
+All routes are mounted under /api. Business logic lives in `routes/` and
+`services/`. This file wires everything together and manages lifecycle.
+"""
 import logging
-from pathlib import Path
-from pydantic import BaseModel, Field
-from typing import List
-import uuid
-from datetime import datetime
 
+from fastapi import APIRouter, FastAPI
+from starlette.middleware.cors import CORSMiddleware
 
-ROOT_DIR = Path(__file__).parent
-load_dotenv(ROOT_DIR / '.env')
+from core.database import close_client, ensure_indexes
+from routes.auth import router as auth_router
+from routes.history import router as history_router
+from routes.memories import router as memories_router
+from routes.meta import router as meta_router
+from routes.profile import router as profile_router
+from routes.reminders import router as reminders_router
+from routes.settings import router as settings_router
 
-# MongoDB connection
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger("hello_sara")
 
-# Create the main app without a prefix
-app = FastAPI()
+app = FastAPI(title="Hello Sara API", version="1.0.0")
 
-# Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+api_router.include_router(meta_router)
+api_router.include_router(auth_router)
+api_router.include_router(profile_router)
+api_router.include_router(settings_router)
+api_router.include_router(memories_router)
+api_router.include_router(history_router)
+api_router.include_router(reminders_router)
 
-
-# Define Models
-class StatusCheck(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-
-class StatusCheckCreate(BaseModel):
-    client_name: str
-
-# Add your routes to the router instead of directly to app
-@api_router.get("/")
-async def root():
-    return {"message": "Hello World"}
-
-@api_router.post("/status", response_model=StatusCheck)
-async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
-    return status_obj
-
-@api_router.get("/status", response_model=List[StatusCheck])
-async def get_status_checks():
-    status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
-
-# Include the router in the main app
 app.include_router(api_router)
 
 app.add_middleware(
@@ -63,13 +44,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+
+@app.on_event("startup")
+async def _startup():
+    await ensure_indexes()
+    logger.info("Hello Sara backend started.")
+
 
 @app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
+async def _shutdown():
+    await close_client()

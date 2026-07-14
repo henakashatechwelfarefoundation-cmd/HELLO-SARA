@@ -1,0 +1,59 @@
+{
+  "summary": "Phase 1 Foundation testing. Backend: 16/16 pytest cases pass on the public preview URL — /api/health, /api/ai/providers (all 5 providers), full auth (register/login/me/google-401), profile onboarding persistence, settings (auto-seed + patch), memories CRUD + search + tag filter, history CRUD + sort + clear-all, reminders CRUD, MongoDB _id never exposed, and user isolation between two accounts. Frontend (Expo web preview, mobile viewport 390x844): Auth screen loads, register/login toggle works, registration navigates to onboarding, Skip successfully reaches Home, mic toggle icon changes, all 3 tabs (Home/Memory/History) render with correct empty states, Settings screen lists all rows, Appearance screen switches Light/AMOLED (visible in screenshots), and Logout returns to Auth. One HIGH priority UI bug: the onboarding 'Next' button does not advance slides on Expo web because index state is only updated via FlatList onViewableItemsChanged (which does not fire reliably on web); users cannot reach Home via the Next button — Skip works as a workaround. Deprecation notices detected in console: 'shadow*' style props are deprecated — use 'boxShadow'.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {
+        "component": "OnboardingScreen",
+        "issue": "Tapping 'Next' does not advance to the following slide on Expo web preview. The `next()` handler calls listRef.current.scrollToIndex({ index: index + 1 }), but the visible `index` state only updates through FlatList's onViewableItemsChanged, which does not fire on the web build. After 6 taps the pagination dot stays on slide 1 and the user never reaches /(tabs)/home. Reference: /app/frontend/app/onboarding.tsx:39-51. Fix: update index optimistically inside next() (e.g. `const nextIdx = Math.min(index+1, SLIDES.length-1); setIndex(nextIdx); listRef.current?.scrollToIndex({ index: nextIdx });`) and call finish() when nextIdx === SLIDES.length-1 && index === SLIDES.length-1.",
+        "testID": "onboarding-next-button",
+        "priority": "HIGH"
+      }
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Onboarding",
+        "issues": [
+          "Glassmorphic slide card is nearly invisible over the aurora background on the first paint (icon+title+body render in the DOM but are not clearly visible in screenshots). Consider raising GlassCard background alpha or adding a subtle stroke for contrast on the onboarding surface."
+        ]
+      }
+    ],
+    "react_native_issues": [
+      {
+        "component": "Shadow styles (multiple)",
+        "issue": "Console warning on every page load: '\"shadow*\" style props are deprecated. Use \"boxShadow\".' — indicates one or more components (likely GlassCard / PrimaryButton) still use RN Web-deprecated shadowColor/shadowOffset/shadowOpacity/shadowRadius. Migrate to `boxShadow` per RN 0.76+/react-native-web guidance."
+        }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_phase1_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "Fix onboarding Next button to update local index state synchronously so slide progression works on Expo web (do not rely on onViewableItemsChanged for state).",
+    "Address 'shadow*' → 'boxShadow' deprecation warning to keep the console clean on web/RN 0.76+.",
+    "(Optional polish) Increase contrast of the onboarding GlassCard so the icon/title/body are visibly framed against the aurora backdrop."
+  ],
+  "critical_code_review_comments": [
+    "Auth flow correctly supports dual-token (JWT + Emergent session_token) via core/deps.py:get_current_user, and MongoDB _id is uniformly excluded via `{'_id': 0}` projections in every route.",
+    "Settings auto-seed on first GET works, but register() also seeds settings — the second insert is prevented only because register runs before any /settings hit; if the register handler ever fails between users.insert_one and settings.insert_one there will be no compensating cleanup. Consider a single seed helper.",
+    "Route DELETE /api/history (clear-all) is declared with path '' after DELETE /{history_id}; FastAPI resolves both correctly, but for readability rename to '/all' or add explicit summary."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_phase1_backend.py",
+    "/app/backend/tests/__init__.py"
+  ],
+  "success_rate": {
+    "backend": "100%",
+    "frontend": "92%"
+  },
+  "seed_data_creation": "Tests create TEST_-prefixed users, memories, history and reminders on the fly and clean up memories after isolation test. Users themselves are retained (there is no DELETE /users endpoint in Phase 1).",
+  "retest_needed": true,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Backend suite lives at /app/backend/tests/test_phase1_backend.py — reuse it. Run with: `EXPO_PUBLIC_BACKEND_URL=<preview-url> pytest /app/backend/tests/test_phase1_backend.py`. The public URL is the value of frontend/.env: EXPO_PUBLIC_BACKEND_URL. Frontend testIDs of interest: auth-submit-button, auth-toggle-mode, auth-name-input, onboarding-next-button, onboarding-skip, home-mic-button, home-settings-button, tab-home/memory/history, memory-empty, history-empty, settings-row-appearance, theme-option-{dark|amoled|light}, settings-logout-button. Onboarding Next is currently broken on web — use Skip to reach Home in E2E tests, or wait for the fix.",
+  "rca_of_issue": "Onboarding Next non-advancement RCA: In /app/frontend/app/onboarding.tsx the `next()` function reads `index` from React state and calls `listRef.current?.scrollToIndex({ index: index + 1 })`. The `index` state is only ever updated in the `onViewableItemsChanged` callback attached to the FlatList. On react-native-web, FlatList's viewability tracking does not fire reliably (particularly on the first synthetic scroll invoked programmatically), so `index` remains 0. Each subsequent Next tap therefore keeps calling `scrollToIndex(1)` — never advancing past slide 2 (and the pagination dot stays on slide 1 as observed). Reproduction: open the preview URL, register a new user, arrive on Onboarding, tap Next repeatedly — the dot never moves and Home is never reached. Mitigation: maintain a local `currentIndex` ref (or set state directly in `next()`) and drive both `scrollToIndex` and `finish()` from that value; keep `onViewableItemsChanged` only as a passive sync from swipe gestures."
+}

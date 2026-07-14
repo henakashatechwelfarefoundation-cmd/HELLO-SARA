@@ -1,20 +1,25 @@
-import { Stack } from "expo-router";
-import * as SplashScreen from "expo-splash-screen";
-import { useEffect } from "react";
-import { LogBox } from "react-native";
+import { Stack } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
+import { LogBox, StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useIconFonts } from "@/src/hooks/use-icon-fonts";
+import { AuthProvider } from '@/src/auth/AuthContext';
+import { useIconFonts } from '@/src/hooks/use-icon-fonts';
+import { ThemeProvider, useTheme } from '@/src/theme/ThemeContext';
 
+// Suppress noisy dev logs so users can focus on the app.
+LogBox.ignoreAllLogs(true);
 
-// Disable logbox errors etc so that users can see the app
-// and agent works as expected.
-LogBox.ignoreAllLogs(true)
-
-// Keep the native splash visible from cold start until icon fonts register.
-// Required because @expo/vector-icons' componentDidMount fallback fires
-// Font.loadAsync against a broken vendor path if any <Icon> mounts before
-// the family is registered — which throws on Android Expo Go.
+// Keep the native splash visible until icon fonts register — required because
+// @expo/vector-icons hits the CDN via useIconFonts on Expo Go / Android.
 SplashScreen.preventAutoHideAsync();
+
+function StatusBarWithTheme() {
+  const { isDark } = useTheme();
+  return <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} />;
+}
 
 export default function RootLayout() {
   const [loaded, error] = useIconFonts();
@@ -25,9 +30,25 @@ export default function RootLayout() {
     }
   }, [loaded, error]);
 
-  // If the CDN is unreachable we fall through on error rather than wedging
-  // the app — icons will tofu, but the app still boots.
+  // On CDN failure we still boot; icons may tofu but the app remains usable.
   if (!loaded && !error) return null;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <StatusBarWithTheme />
+            <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="settings" />
+            </Stack>
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
 }
