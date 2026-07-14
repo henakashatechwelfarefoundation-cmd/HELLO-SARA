@@ -6,6 +6,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/src/auth/AuthContext';
+import { ErrorBoundary } from '@/src/components/ErrorBoundary';
+import { OfflineBanner } from '@/src/components/OfflineBanner';
 import { useIconFonts } from '@/src/hooks/use-icon-fonts';
 import { ThemeProvider, useTheme } from '@/src/theme/ThemeContext';
 
@@ -37,16 +39,24 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <StatusBarWithTheme />
-            <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="onboarding" />
-              <Stack.Screen name="auth" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="settings" />
-            </Stack>
-          </AuthProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <StatusBarWithTheme />
+              <OfflineBanner />
+              <Stack screenOptions={{ headerShown: false, animation: 'fade' }}>
+                <Stack.Screen name="index" />
+                <Stack.Screen name="onboarding" />
+                <Stack.Screen name="auth" />
+                <Stack.Screen name="(tabs)" />
+                <Stack.Screen name="settings" />
+                <Stack.Screen name="chat" options={{ animation: 'slide_from_bottom' }} />
+                <Stack.Screen name="notes" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="reminders" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="device" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="briefing" options={{ animation: 'slide_from_right' }} />
+              </Stack>
+            </AuthProvider>
+          </ErrorBoundary>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

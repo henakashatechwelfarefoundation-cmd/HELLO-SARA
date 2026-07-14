@@ -11,6 +11,17 @@ import { useTheme } from '@/src/theme/ThemeContext';
 
 const SECTIONS: { key: string; title: string; rows: { icon: any; title: string; path: string }[] }[] = [
   {
+    key: 'tools',
+    title: 'Tools',
+    rows: [
+      { icon: 'chatbubbles-outline', title: 'Chat', path: '/chat' },
+      { icon: 'document-text-outline', title: 'Notes', path: '/notes' },
+      { icon: 'alarm-outline', title: 'Reminders', path: '/reminders' },
+      { icon: 'phone-portrait-outline', title: 'Device Control', path: '/device' },
+      { icon: 'analytics-outline', title: 'Daily Briefing', path: '/briefing' },
+    ],
+  },
+  {
     key: 'preferences',
     title: 'Preferences',
     rows: [

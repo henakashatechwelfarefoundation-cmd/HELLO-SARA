@@ -88,6 +88,42 @@ export const HistoryApi = {
   clear: () => api<any>('/history', { method: 'DELETE' }),
 };
 
+export const NotesApi = {
+  list: (q?: string) => api<any[]>(`/notes${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  create: (payload: { title: string; content: string; tags: string[]; color?: string; pinned?: boolean }) =>
+    api<any>('/notes', { method: 'POST', body: JSON.stringify(payload) }),
+  update: (id: string, payload: Record<string, unknown>) =>
+    api<any>(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  remove: (id: string) => api<any>(`/notes/${id}`, { method: 'DELETE' }),
+};
+
+export const RemindersApi = {
+  list: () => api<any[]>('/reminders'),
+  create: (payload: { title: string; notes?: string; remind_at: string }) =>
+    api<any>('/reminders', { method: 'POST', body: JSON.stringify(payload) }),
+  remove: (id: string) => api<any>(`/reminders/${id}`, { method: 'DELETE' }),
+};
+
+export const ChatApi = {
+  send: (messages: { role: string; content: string }[], save_history = true) =>
+    api<{ reply: string; provider: string; model: string; history_id?: string }>(
+      '/chat', { method: 'POST', body: JSON.stringify({ messages, save_history }) },
+    ),
+};
+
+export const BriefingApi = {
+  get: () => api<any>('/briefing'),
+};
+
+export const DeviceApi = {
+  listCommands: () => api<any[]>('/device/commands'),
+  logCommand: (payload: { action: string; payload?: object; status?: string }) =>
+    api<any>('/device/commands', { method: 'POST', body: JSON.stringify(payload) }),
+  listComms: () => api<any[]>('/device/comms'),
+  logComm: (payload: any) =>
+    api<any>('/device/comms', { method: 'POST', body: JSON.stringify(payload) }),
+};
+
 export const MetaApi = {
   providers: () => api<any[]>('/ai/providers'),
   health: () => api<any>('/health'),
