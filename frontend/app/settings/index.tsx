@@ -18,6 +18,7 @@ const SECTIONS: { key: string; title: string; rows: { icon: any; title: string; 
       { icon: 'document-text-outline', title: 'Notes', path: '/notes' },
       { icon: 'alarm-outline', title: 'Reminders', path: '/reminders' },
       { icon: 'git-branch-outline', title: 'Automations', path: '/automations' },
+      { icon: 'storefront-outline', title: 'Marketplace', path: '/marketplace' },
       { icon: 'scan-outline', title: 'Scan & OCR', path: '/ocr' },
       { icon: 'phone-portrait-outline', title: 'Device Control', path: '/device' },
       { icon: 'analytics-outline', title: 'Daily Briefing', path: '/briefing' },

@@ -15,6 +15,7 @@ from routes.briefing import router as briefing_router
 from routes.chat import router as chat_router
 from routes.device import router as device_router
 from routes.history import router as history_router
+from routes.marketplace import router as marketplace_router, seed_marketplace_if_empty
 from routes.memories import router as memories_router
 from routes.meta import router as meta_router
 from routes.notes import router as notes_router
@@ -45,6 +46,7 @@ api_router.include_router(briefing_router)
 api_router.include_router(device_router)
 api_router.include_router(automations_router)
 api_router.include_router(ocr_router)
+api_router.include_router(marketplace_router)
 
 app.include_router(api_router)
 
@@ -60,6 +62,7 @@ app.add_middleware(
 @app.on_event("startup")
 async def _startup():
     await ensure_indexes()
+    await seed_marketplace_if_empty()
     logger.info("Hello Sara backend started.")
 
 

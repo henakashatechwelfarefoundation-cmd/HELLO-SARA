@@ -57,6 +57,7 @@ export default function RootLayout() {
                 <Stack.Screen name="briefing" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="automations" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="ocr" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="marketplace" options={{ animation: 'slide_from_right' }} />
               </Stack>
               <FloatingAssistant />
             </AuthProvider>

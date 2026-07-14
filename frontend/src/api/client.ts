@@ -145,6 +145,22 @@ export const OcrApi = {
   run: (image_base64: string) => api<any>('/ocr', { method: 'POST', body: JSON.stringify({ image_base64 }) }),
 };
 
+export const MarketplaceApi = {
+  list: (q?: string, tag?: string) => {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (tag) params.set('tag', tag);
+    const qs = params.toString() ? `?${params.toString()}` : '';
+    return api<any[]>(`/marketplace/workflows${qs}`);
+  },
+  publish: (payload: { workflow_id: string; description: string; icon?: string; tags?: string[] }) =>
+    api<any>('/marketplace/publish', { method: 'POST', body: JSON.stringify(payload) }),
+  install: (marketplace_id: string) =>
+    api<any>(`/marketplace/install/${marketplace_id}`, { method: 'POST' }),
+  like: (marketplace_id: string) =>
+    api<any>(`/marketplace/like/${marketplace_id}`, { method: 'POST' }),
+};
+
 export const MetaApi = {
   providers: () => api<any[]>('/ai/providers'),
   health: () => api<any>('/health'),

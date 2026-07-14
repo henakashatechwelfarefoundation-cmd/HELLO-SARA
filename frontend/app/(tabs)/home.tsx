@@ -26,6 +26,7 @@ const SHORTCUTS = [
   { key: 'reminders',   icon: 'alarm',             label: 'Reminders',   path: '/reminders' },
   { key: 'device',      icon: 'phone-portrait',    label: 'Device',      path: '/device' },
   { key: 'automations', icon: 'git-branch',        label: 'Automations', path: '/automations' },
+  { key: 'marketplace', icon: 'storefront',        label: 'Marketplace', path: '/marketplace' },
   { key: 'ocr',         icon: 'scan',              label: 'Scan',        path: '/ocr' },
   { key: 'briefing',    icon: 'analytics',         label: 'Briefing',    path: '/briefing' },
 ] as const;
