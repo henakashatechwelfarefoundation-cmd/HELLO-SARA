@@ -70,7 +70,8 @@
           "speechRecognitionPermission": "Convert your voice to text"
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      "./plugins/hello-sara-native/app.plugin.js"
     ],
     "experiments": {
       "typedRoutes": true
