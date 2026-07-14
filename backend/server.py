@@ -10,6 +10,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from core.database import close_client, ensure_indexes
 from routes.auth import router as auth_router
+from routes.automations import router as automations_router
 from routes.briefing import router as briefing_router
 from routes.chat import router as chat_router
 from routes.device import router as device_router
@@ -17,6 +18,7 @@ from routes.history import router as history_router
 from routes.memories import router as memories_router
 from routes.meta import router as meta_router
 from routes.notes import router as notes_router
+from routes.ocr import router as ocr_router
 from routes.profile import router as profile_router
 from routes.reminders import router as reminders_router
 from routes.settings import router as settings_router
@@ -41,6 +43,8 @@ api_router.include_router(notes_router)
 api_router.include_router(chat_router)
 api_router.include_router(briefing_router)
 api_router.include_router(device_router)
+api_router.include_router(automations_router)
+api_router.include_router(ocr_router)
 
 app.include_router(api_router)
 

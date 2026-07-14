@@ -124,6 +124,27 @@ export const DeviceApi = {
     api<any>('/device/comms', { method: 'POST', body: JSON.stringify(payload) }),
 };
 
+export const AutomationsApi = {
+  list: () => api<any[]>('/automations'),
+  create: (payload: any) => api<any>('/automations', { method: 'POST', body: JSON.stringify(payload) }),
+  update: (id: string, payload: any) => api<any>(`/automations/${id}`, { method: 'PATCH', body: JSON.stringify(payload) }),
+  run: (id: string) => api<any>(`/automations/${id}/run`, { method: 'POST' }),
+  remove: (id: string) => api<any>(`/automations/${id}`, { method: 'DELETE' }),
+  recordUsage: (kind: string, key: string) =>
+    api<any>('/usage', { method: 'POST', body: JSON.stringify({ kind, key }) }),
+  topUsage: (kind?: string, limit = 5) => {
+    const params = new URLSearchParams();
+    if (kind) params.set('kind', kind);
+    params.set('limit', String(limit));
+    return api<any[]>(`/usage/top?${params.toString()}`);
+  },
+  backup: () => api<any>('/backup'),
+};
+
+export const OcrApi = {
+  run: (image_base64: string) => api<any>('/ocr', { method: 'POST', body: JSON.stringify({ image_base64 }) }),
+};
+
 export const MetaApi = {
   providers: () => api<any[]>('/ai/providers'),
   health: () => api<any>('/health'),

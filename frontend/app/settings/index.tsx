@@ -17,6 +17,8 @@ const SECTIONS: { key: string; title: string; rows: { icon: any; title: string; 
       { icon: 'chatbubbles-outline', title: 'Chat', path: '/chat' },
       { icon: 'document-text-outline', title: 'Notes', path: '/notes' },
       { icon: 'alarm-outline', title: 'Reminders', path: '/reminders' },
+      { icon: 'git-branch-outline', title: 'Automations', path: '/automations' },
+      { icon: 'scan-outline', title: 'Scan & OCR', path: '/ocr' },
       { icon: 'phone-portrait-outline', title: 'Device Control', path: '/device' },
       { icon: 'analytics-outline', title: 'Daily Briefing', path: '/briefing' },
     ],

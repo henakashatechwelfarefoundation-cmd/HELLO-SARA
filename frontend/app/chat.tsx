@@ -10,6 +10,8 @@ import { ChatApi } from '@/src/api/client';
 import { AuroraBackground } from '@/src/components/AuroraBackground';
 import { MicButton } from '@/src/components/MicButton';
 import { useTheme } from '@/src/theme/ThemeContext';
+import { executeIntent, parseIntent } from '@/src/voice/commandRouter';
+import { useTorch } from '@/src/voice/useTorch';
 import {
   isRecognitionSupported, speak, startRecognition, stopSpeaking,
 } from '@/src/voice/voice';
@@ -25,6 +27,7 @@ interface Message {
 export default function ChatScreen() {
   const { palette, spacing, fontSize, fontWeight, radius } = useTheme();
   const params = useLocalSearchParams<{ autostart?: string }>();
+  const { controller: torch, PortalNode } = useTorch();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [listening, setListening] = useState(false);
@@ -37,11 +40,29 @@ export default function ChatScreen() {
     const trimmed = text.trim();
     if (!trimmed) return;
     setError(null);
+    setInput('');
+
+    // Voice-command routing — device actions never round-trip through AI
+    const intent = parseIntent(trimmed);
+    if (intent.type !== 'chat') {
+      const userMsg: Message = { id: `m_${Date.now()}`, role: 'user', content: trimmed };
+      setMessages((cur) => [...cur, userMsg]);
+      const result = await executeIntent(intent, {
+        torch,
+        onChat: async () => { /* fall-through never reached */ },
+      });
+      const sysMsg: Message = {
+        id: `s_${Date.now()}`, role: 'assistant',
+        content: result.message,
+      };
+      setMessages((cur) => [...cur, sysMsg]);
+      return;
+    }
+
     const userMsg: Message = { id: `m_${Date.now()}`, role: 'user', content: trimmed };
     const pendingMsg: Message = { id: `p_${Date.now()}`, role: 'assistant', content: 'Thinking…', pending: true };
     const nextMessages = [...messages, userMsg, pendingMsg];
     setMessages(nextMessages);
-    setInput('');
     try {
       const history = nextMessages
         .filter((m) => !m.pending && !m.error)
@@ -55,7 +76,7 @@ export default function ChatScreen() {
         ? { ...m, content: e?.detail || 'Something went wrong reaching your AI provider. Configure it in Settings › AI Provider.', pending: false, error: true }
         : m)));
     }
-  }, [messages]);
+  }, [messages, torch]);
 
   const startListen = useCallback(async () => {
     setError(null);

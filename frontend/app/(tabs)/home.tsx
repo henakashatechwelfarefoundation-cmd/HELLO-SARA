@@ -21,11 +21,13 @@ interface Brief {
 }
 
 const SHORTCUTS = [
-  { key: 'chat',      icon: 'chatbubbles',       label: 'Chat',      path: '/chat' },
-  { key: 'notes',     icon: 'document-text',     label: 'Notes',     path: '/notes' },
-  { key: 'reminders', icon: 'alarm',             label: 'Reminders', path: '/reminders' },
-  { key: 'device',    icon: 'phone-portrait',    label: 'Device',    path: '/device' },
-  { key: 'briefing',  icon: 'analytics',         label: 'Briefing',  path: '/briefing' },
+  { key: 'chat',        icon: 'chatbubbles',       label: 'Chat',        path: '/chat' },
+  { key: 'notes',       icon: 'document-text',     label: 'Notes',       path: '/notes' },
+  { key: 'reminders',   icon: 'alarm',             label: 'Reminders',   path: '/reminders' },
+  { key: 'device',      icon: 'phone-portrait',    label: 'Device',      path: '/device' },
+  { key: 'automations', icon: 'git-branch',        label: 'Automations', path: '/automations' },
+  { key: 'ocr',         icon: 'scan',              label: 'Scan',        path: '/ocr' },
+  { key: 'briefing',    icon: 'analytics',         label: 'Briefing',    path: '/briefing' },
 ] as const;
 
 export default function HomeScreen() {

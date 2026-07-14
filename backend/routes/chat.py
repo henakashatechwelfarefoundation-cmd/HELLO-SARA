@@ -6,6 +6,11 @@ Supported wire formats:
 
 The provider itself is defined in user Settings; no keys are stored server-side.
 Requests time out at 60s; errors bubble back as 502 with a friendly message.
+
+The Decision Engine (services/decision_engine.py) augments each request with:
+  - Relevant memories from the user's personal store.
+  - A DuckDuckGo snippet when the query looks time-sensitive or explicitly asks
+    the model to search the web.
 """
 import uuid
 from datetime import datetime, timezone
@@ -17,6 +22,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from core.database import get_db
 from core.deps import get_current_user
 from pydantic import BaseModel, Field
+from services.decision_engine import (
+    compose_augmented_messages, duckduckgo_snippet, relevant_memories, uses_memory, wants_web,
+)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -36,6 +44,7 @@ class ChatResponse(BaseModel):
     provider: str
     model: str
     history_id: str | None = None
+    sources: list[str] = []
 
 
 async def _get_provider_config(user_id: str) -> dict[str, Any]:
@@ -86,11 +95,30 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
         )
 
     payload = [m.model_dump() for m in body.messages]
+
+    # ---- Decision Engine ----
+    last_user = next((m.content for m in reversed(body.messages) if m.role == "user"), "")
+    db = get_db()
+    sources: list[str] = ["context"]
+    memories: list[dict] = []
+    web_snippet: str | None = None
+    if last_user and uses_memory(last_user):
+        memories = await relevant_memories(db, user["user_id"], last_user)
+        if memories:
+            sources.append("memory")
+    if last_user and wants_web(last_user):
+        web_snippet = await duckduckgo_snippet(last_user)
+        if web_snippet:
+            sources.append("web")
+
+    augmented = compose_augmented_messages(payload, memories, web_snippet, user.get("name", ""))
+    sources.append("ai")
+
     try:
         if cfg["provider"] == "ollama":
-            reply = await _call_ollama(cfg["base_url"], cfg["model"], payload)
+            reply = await _call_ollama(cfg["base_url"], cfg["model"], augmented)
         else:
-            reply = await _call_openai_compat(cfg["base_url"], cfg["model"], payload)
+            reply = await _call_openai_compat(cfg["base_url"], cfg["model"], augmented)
     except httpx.HTTPError as e:
         raise HTTPException(status_code=502, detail=f"AI provider error: {e}")
 
@@ -100,15 +128,15 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
 
     history_id: str | None = None
     if body.save_history:
-        last_user = next((m.content for m in reversed(body.messages) if m.role == "user"), "")
-        db = get_db()
+        db2 = get_db()
         history_id = f"hist_{uuid.uuid4().hex[:12]}"
-        await db.history.insert_one({
+        await db2.history.insert_one({
             "history_id": history_id,
             "user_id": user["user_id"],
             "title": (last_user[:60] or "Conversation") + ("…" if len(last_user) > 60 else ""),
             "snippet": reply[:140],
             "turns": len(body.messages) + 1,
+            "sources": sources,
             "created_at": datetime.now(timezone.utc),
         })
 
@@ -117,4 +145,5 @@ async def chat(body: ChatRequest, user: dict = Depends(get_current_user)):
         provider=cfg["provider"],
         model=cfg["model"],
         history_id=history_id,
+        sources=sources,
     )

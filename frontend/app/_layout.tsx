@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider } from '@/src/auth/AuthContext';
 import { ErrorBoundary } from '@/src/components/ErrorBoundary';
+import { FloatingAssistant } from '@/src/components/FloatingAssistant';
 import { OfflineBanner } from '@/src/components/OfflineBanner';
 import { useIconFonts } from '@/src/hooks/use-icon-fonts';
 import { ThemeProvider, useTheme } from '@/src/theme/ThemeContext';
@@ -54,7 +55,10 @@ export default function RootLayout() {
                 <Stack.Screen name="reminders" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="device" options={{ animation: 'slide_from_right' }} />
                 <Stack.Screen name="briefing" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="automations" options={{ animation: 'slide_from_right' }} />
+                <Stack.Screen name="ocr" options={{ animation: 'slide_from_right' }} />
               </Stack>
+              <FloatingAssistant />
             </AuthProvider>
           </ErrorBoundary>
         </ThemeProvider>

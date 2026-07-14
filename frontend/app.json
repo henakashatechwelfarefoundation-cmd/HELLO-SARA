@@ -69,7 +69,8 @@
           "microphonePermission": "Talk with Sara using your voice",
           "speechRecognitionPermission": "Convert your voice to text"
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
