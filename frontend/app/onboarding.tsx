@@ -1,9 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useRef, useState } from 'react';
-import {
-  Dimensions, FlatList, StyleSheet, Text, View, ViewToken,
-} from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AuroraBackground } from '@/src/components/AuroraBackground';
@@ -11,8 +9,6 @@ import { GlassCard } from '@/src/components/GlassCard';
 import { PrimaryButton } from '@/src/components/PrimaryButton';
 import { useAuth } from '@/src/auth/AuthContext';
 import { useTheme } from '@/src/theme/ThemeContext';
-
-const { width } = Dimensions.get('window');
 
 interface Slide {
   key: string;
@@ -34,20 +30,13 @@ export default function OnboardingScreen() {
   const { palette, spacing, fontSize, fontWeight } = useTheme();
   const { markOnboardingDone } = useAuth();
   const [index, setIndex] = useState(0);
-  const listRef = useRef<FlatList<Slide>>(null);
 
-  const onViewable = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
-    if (viewableItems.length > 0 && viewableItems[0].index != null) {
-      setIndex(viewableItems[0].index);
-    }
-  }).current;
+  const slide = SLIDES[index];
+  const isLast = index === SLIDES.length - 1;
 
   const next = () => {
-    if (index < SLIDES.length - 1) {
-      listRef.current?.scrollToIndex({ index: index + 1, animated: true });
-    } else {
-      finish();
-    }
+    if (!isLast) setIndex(index + 1);
+    else finish();
   };
 
   const finish = async () => {
@@ -56,52 +45,52 @@ export default function OnboardingScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: palette.surface }}>
+    <View style={{ flex: 1, backgroundColor: palette.surface }} testID="onboarding-screen">
       <AuroraBackground />
       <SafeAreaView style={{ flex: 1 }} edges={['top', 'bottom']}>
-        <View style={{ paddingHorizontal: spacing.xl, paddingTop: spacing.md, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <View style={{
+          paddingHorizontal: spacing.xl, paddingTop: spacing.md,
+          flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        }}>
           <Text style={{ color: palette.onSurface, fontSize: fontSize.lg, fontWeight: fontWeight.semibold }}>
             Meet Sara
           </Text>
-          <Text
-            onPress={finish}
-            style={{ color: palette.onSurfaceSecondary, fontSize: fontSize.base, fontWeight: fontWeight.medium }}
-            testID="onboarding-skip"
-          >
-            Skip
-          </Text>
+          <Pressable onPress={finish} hitSlop={10} testID="onboarding-skip">
+            <Text style={{ color: palette.onSurfaceSecondary, fontSize: fontSize.base, fontWeight: fontWeight.medium }}>
+              Skip
+            </Text>
+          </Pressable>
         </View>
 
-        <FlatList
-          ref={listRef}
-          data={SLIDES}
-          keyExtractor={(s) => s.key}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onViewableItemsChanged={onViewable}
-          viewabilityConfig={{ itemVisiblePercentThreshold: 60 }}
-          renderItem={({ item }) => (
-            <View style={{ width, paddingHorizontal: spacing.xl, justifyContent: 'center', alignItems: 'center' }}>
-              <GlassCard style={{ width: '100%', maxWidth: 420 }} padding={spacing.xl}>
-                <View style={{ alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.lg }}>
-                  <View style={{
-                    width: 88, height: 88, borderRadius: 24, alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: palette.brandTertiary + '55',
-                  }}>
-                    <Ionicons name={item.icon} size={48} color={palette.brand} />
-                  </View>
-                  <Text style={{ color: palette.onSurface, fontSize: fontSize.xxl, fontWeight: fontWeight.bold, textAlign: 'center' }}>
-                    {item.title}
-                  </Text>
-                  <Text style={{ color: palette.onSurfaceSecondary, fontSize: fontSize.lg, textAlign: 'center', lineHeight: 24 }}>
-                    {item.body}
-                  </Text>
-                </View>
-              </GlassCard>
+        <View style={{ flex: 1, paddingHorizontal: spacing.xl, justifyContent: 'center' }}>
+          <GlassCard padding={spacing.xl}>
+            <View
+              key={slide.key}
+              style={{ alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.lg }}
+              testID={`onboarding-slide-${slide.key}`}
+            >
+              <View style={{
+                width: 96, height: 96, borderRadius: 28,
+                alignItems: 'center', justifyContent: 'center',
+                backgroundColor: palette.brandTertiary + '55',
+              }}>
+                <Ionicons name={slide.icon} size={52} color={palette.brand} />
+              </View>
+              <Text style={{
+                color: palette.onSurface, fontSize: fontSize.xxl,
+                fontWeight: fontWeight.bold, textAlign: 'center',
+              }}>
+                {slide.title}
+              </Text>
+              <Text style={{
+                color: palette.onSurfaceSecondary, fontSize: fontSize.lg,
+                textAlign: 'center', lineHeight: 24,
+              }}>
+                {slide.body}
+              </Text>
             </View>
-          )}
-        />
+          </GlassCard>
+        </View>
 
         <View style={{ paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, gap: spacing.lg }}>
           <View style={{ flexDirection: 'row', justifyContent: 'center', gap: spacing.sm }}>
@@ -116,7 +105,7 @@ export default function OnboardingScreen() {
             ))}
           </View>
           <PrimaryButton
-            label={index === SLIDES.length - 1 ? 'Get Started' : 'Next'}
+            label={isLast ? 'Get Started' : 'Next'}
             onPress={next}
             testID="onboarding-next-button"
           />

@@ -29,7 +29,9 @@ export const GlassCard: React.FC<Props> = ({
     overflow: 'hidden',
     borderWidth: bordered ? StyleSheet.hairlineWidth : 0,
     borderColor: palette.glassBorder,
-    backgroundColor: Platform.OS === 'android' && !isDark ? palette.surfaceSecondary : 'transparent',
+    // Web + low-end Android: BlurView may be transparent — ensure the card
+    // always has a visible surface underneath.
+    backgroundColor: Platform.OS === 'web' ? palette.surfaceSecondary : palette.surfaceSecondary + '80',
   };
 
   return (
